@@ -51,10 +51,16 @@ var Main = React.createClass({
         });
     },
 
+    onLogout: function() {
+        Parse.User.logOut();
+        renderAuthView();
+    },
+
     // rendering
     render: function() {
         return (
             <div className="main">
+                <h2 className="text-muted">Hi {Parse.User.current().getUsername()}! <button onClick={this.onLogout} className="btn btn-default btn-xs">Logout</button></h2>
                 <NewStatusForm onNewPost={this.onNewPost} />
                 <StatusList data={this.state.data} />
             </div>
@@ -98,10 +104,9 @@ var NewStatusForm = React.createClass({
     handleSubmit: function(e) {
         e.preventDefault();
 
-        var usernameNode = this.refs.username,
-            messageNode  = this.refs.message,
-            username     = React.findDOMNode(usernameNode).value.trim(),
-            message      = React.findDOMNode(messageNode).value.trim();
+        var messageNode  = this.refs.message,
+            message      = React.findDOMNode(messageNode).value.trim(),
+            username = Parse.User.current().getUsername();
 
         if (!username || !message)
         {
@@ -113,7 +118,6 @@ var NewStatusForm = React.createClass({
             message: message,
             created_time: +new Date
         });
-        React.findDOMNode(usernameNode).value = '';
         React.findDOMNode(messageNode).value = '';
         return;
     },
@@ -122,7 +126,6 @@ var NewStatusForm = React.createClass({
     render: function() {
         return (
             <form className="form-horizontal center-block" onSubmit={this.handleSubmit}>
-                <input className="form-control input-lg" type="text" placeholder="Your username" ref="username" />
                 <div className="input-group">
                     <input className="form-control input-lg" placeholder="What's happening?" ref="message" type="text" />
                     <div className="input-group-btn">
@@ -154,8 +157,106 @@ var StatusPost = React.createClass({
 });
 
 
+/*
+ * Authentication
+ */
+var AuthenticationForm = React.createClass({
+
+    // handle signin
+    createAccount: function(data) {
+        var user = new Parse.User();
+        user.set('username', data.username);
+        user.set('password', data.password);
+        user.set('email', data.email);
+
+        user.signUp(null, {
+            success: function(user) {
+                renderFeedView();
+            },
+            error: function(user, error) {
+                alert("Error: " + error.code + " " + error.message);
+            }
+        });
+    },
+
+    onCreateAccount: function(e) {
+        e.preventDefault();
+
+        var username = React.findDOMNode(this.refs.username).value.trim(),
+            email    = React.findDOMNode(this.refs.email).value.trim(),
+            password = React.findDOMNode(this.refs.password).value.trim();
+
+        this.createAccount({
+            username: username,
+            email: email,
+            password: password
+        });
+    },
+
+    // handle login
+    login: function(data) {
+        Parse.User.logIn(data.username, data.password, {
+            success: function(user) {
+                renderFeedView();
+            },
+            error: function(user, error) {
+                alert("Error: " + error.code + " " + error.message);
+            }
+        });
+    },
+
+    onLogin: function(e) {
+        e.preventDefault();
+
+        var username = React.findDOMNode(this.refs.log_username).value.trim(),
+            password = React.findDOMNode(this.refs.log_password).value.trim();
+
+        this.login({
+            username: username,
+            password: password
+        });
+    },
+
+    render: function() {
+        return (
+            <div className="authentication-form">
+                <h3>Sign-in !</h3>
+                <form className="form-inline" onSubmit={this.onCreateAccount}>
+                    <div className="form-group"><input className="input-lg form-control" type="text" ref="username" placeholder="Username" /></div>
+                    <div className="form-group"><input className="input-lg form-control" type="text" ref="email" placeholder="Email" /></div>
+                    <div className="form-group"><input className="input-lg form-control" type="password" ref="password" placeholder="Password" /></div>
+                    <div className="form-group"><input className="btn btn-primary" type="submit" value="Create my account!" /></div>
+                </form>
+                <h3>Login</h3>
+                <form className="form-inline" onSubmit={this.onLogin}>
+                    <div className="form-group"><input className="input-lg form-control" type="text" ref="log_username" placeholder="Username" /></div>
+                    <div className="form-group"><input className="input-lg form-control" type="password" ref="log_password" placeholder="Password" /></div>
+                    <div className="form-group"><input className="btn btn-primary" type="submit" value="Login" /></div>
+                </form>
+            </div>
+        );
+    }
+});
+
 // Init the app page
-React.render(
-  <Main url="posts.json" refreshInt={3000} />,
-  document.getElementById('main')
-);
+Parse.initialize("t4UoMELz7WY339ZMMRMdhuRXi8u0U5gBhKg7m977", "xI3WhlPFvfy3Nkfk5MR1es1ODUNFEf3UfUTHN9j6");
+
+var renderAuthView = function() {
+    React.render(
+        <AuthenticationForm />,
+        document.getElementById('main')
+    );
+}
+
+var renderFeedView = function() {
+    React.render(
+      <Main url="posts.json" refreshInt={3000} />,
+      document.getElementById('main')
+    );
+}
+
+if (Parse.User.current()) {
+    renderFeedView();
+} else {
+    renderAuthView();
+}
