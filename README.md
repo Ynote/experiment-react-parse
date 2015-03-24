@@ -1,6 +1,6 @@
-# Twitter-like
+# React-feed
 
-Twitter-like feed in Node.js
+This single app page displays a feed with React and use Parse for the authentication.
 
     npm start
 
