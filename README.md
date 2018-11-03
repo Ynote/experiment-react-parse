@@ -6,7 +6,7 @@
 
 This is a small project that intends to test React and Parse.
 
-It is a single app page that displays a feed with React and use Parse for the authentication: [http://dev.ynote.hk:3000/](http://dev.ynote.hk:3000/)
+It is a single app page that displays a feed with React and use Parse for the authentication: 
 
     npm start
 
